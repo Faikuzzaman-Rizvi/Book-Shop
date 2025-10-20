@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Boimela | Place Order</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #ffffff;
+      color: #1a1a1a;
+      line-height: 1.6;
+    }
+
+    /* ==== HEADER ==== */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 60px;
+      background: white;
+      border-bottom: 1px solid #e5e5e5;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 35px;
+      align-items: center;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      color: #666;
+      font-size: 14px;
+      transition: color 0.3s;
+      font-weight: 500;
+    }
+
+    .nav-links a:hover {
+      color: #1a1a1a;
+    }
+
+    .nav-right {
+      display: flex;
+      gap: 25px;
+      align-items: center;
+    }
+
+    .nav-right a {
+      color: #666;
+      text-decoration: none;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: color 0.3s;
+    }
+
+    .nav-right a:hover {
+      color: #1a1a1a;
+    }
+
+    /* ==== ORDER FORM ==== */
+    .order-section {
+      max-width: 500px;
+      margin: 80px auto;
+      background: #fff;
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 28px;
+      margin-bottom: 30px;
+      font-weight: 600;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #333;
+      font-size: 14px;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      margin-bottom: 18px;
+      font-size: 14px;
+      transition: border 0.3s;
+    }
+
+    input:focus {
+      border-color: #1a1a1a;
+      outline: none;
+    }
+
+    input[disabled] {
+      background: #f8f8f8;
+      color: #777;
+    }
+
+    .quantity-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .quantity-row button {
+      width: 36px;
+      height: 36px;
+      border: none;
+      background: #1a1a1a;
+      color: white;
+      border-radius: 6px;
+      font-size: 18px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .quantity-row button:hover {
+      background: #333;
+    }
+
+    #btnSave {
+      width: 100%;
+      padding: 14px;
+      background: transparent;
+      border: 2px solid #1a1a1a;
+      color: #1a1a1a;
+      font-size: 14px;
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 1px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    #btnSave:hover {
+      background: #1a1a1a;
+      color: white;
+    }
+
+    .footer-note {
+      text-align: center;
+      margin-top: 20px;
+      color: #999;
+      font-size: 13px;
+    }
+
+    /* ==== FOOTER ==== */
+    footer {
+      background: #1a1a1a;
+      color: white;
+      text-align: center;
+      padding: 40px;
+      margin-top: 100px;
+    }
+
+    footer p {
+      font-size: 13px;
+      color: #999;
+    }
+
+    @media(max-width: 600px) {
+      .order-section {
+        margin: 40px 20px;
+        padding: 30px 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ==== HEADER ==== -->
+ <header>
+    <div class="logo">Boimela</div>
+    <nav class="nav-links">
+      <a href="#">Home</a>
+      <a href="#">Shop</a>
+      <a href="#">Blog</a>
+      <a href="#">Pages</a>
+      <a href="#">Contact</a>
+    </nav>
+    <div class="nav-right">
+      <a href="cart.html">🛒 Cart (<span id="cartCount">0</span>)</a>
+      <a href="Login.html">Login</a>
+    </div>
+  </header>
+
+  <!-- ==== ORDER FORM ==== -->
+  <section class="order-section">
+    <h1>Place Your Order</h1>
+
+    <label>Customer Name</label>
+    <input type="text" id="customername" placeholder="Enter customer name">
+
+    <label>Product Name</label>
+    <input type="text" id="name" disabled>
+
+    <label>Price</label>
+    <input type="text" id="price" disabled>
+
+    <label>Stock</label>
+    <input type="text" id="stock" disabled>
+
+    <label>Quantity</label>
+    <div class="quantity-row">
+      <button id="btnminus">−</button>
+      <input type="text" id="qurantity" disabled>
+      <button id="btnplus">+</button>
+    </div>
+
+    <label>Total Price</label>
+    <input type="text" id="totalprice" disabled>
+
+    <button id="btnSave">Place Order</button>
+
+    <div class="footer-note">Live stock updates via Socket.io</div>
+  </section>
+
+  <!-- ==== FOOTER ==== -->
+  <footer>
+    <p>&copy; 2025 Fayekuzzaman | ASP.NET Developer. All rights reserved.</p>
+  </footer>
+
+  <script>
+    let urlo = 'http://localhost:5000/api/orders';
+    let urlp = 'http://localhost:5000/api/products';
+    const socket = io('http://localhost:5000');
+
+    socket.on('connect', () => console.log('Connected to server'));
+
+    document.getElementById('btnSave').addEventListener('click', async () => {
+      let pid = window.location.search.toString().split("=")[1];
+      let cname = document.getElementById("customername").value;
+      let quantity = Number(document.getElementById("qurantity").value);
+      let totalprice = Number(document.getElementById("totalprice").value);
+
+      if (!cname || quantity <= 0) {
+        alert("Please enter customer name and quantity!");
+        return;
+      }
+
+      let sendBody = {
+        customername: cname,
+        items: [{ product: pid, quantity: quantity }],
+        totalprice: totalprice,
+        status: 'pending'
+      };
+
+      try {
+        await fetch(urlo, {
+          method: "POST",
+          body: JSON.stringify(sendBody),
+          headers: { 'Content-Type': 'application/json' },
+        })
+          .then(data => data.json())
+          .then(async (data) => {
+            let sk = Number(document.getElementById("stock").value) - Number(document.getElementById("qurantity").value);
+            let sendUrl = urlp + '/' + pid + '/stock';
+            await fetch(sendUrl, {
+              method: "PUT",
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ stock: sk })
+            })
+              .then(data => data.json())
+              .then(data => socket.emit('currentstock', data));
+          });
+
+        alert(`Order placed successfully for "${document.getElementById("name").value}"!`);
+        setTimeout(() => window.location.href = "index.html", 2000);
+
+      } catch (err) {
+        console.log(err);
+        alert("Something went wrong. Please try again.");
+      }
+    });
+
+    socket.on('productupdate', (product) => {
+      let id = window.location.search.toString().split("=")[1];
+      if (id == product._id) {
+        document.getElementById("stock").value = product.stock.toString();
+      }
+    });
+
+    async function initcall() {
+      let id = window.location.search.toString().split("=")[1];
+      await fetch(urlp)
+        .then(data => data.json())
+        .then(data => {
+          for (const v of data) {
+            if (String(v._id) === id) {
+              document.getElementById("name").value = v.name;
+              document.getElementById("price").value = v.price;
+              document.getElementById("stock").value = v.stock;
+              document.getElementById("qurantity").value = 0;
+              document.getElementById("totalprice").value = 0;
+              break;
+            }
+          }
+        });
+    }
+
+    initcall();
+
+    document.getElementById("btnplus").addEventListener("click", function () {
+      let p = Number(document.getElementById("price").value);
+      let q = Number(document.getElementById("qurantity").value);
+      let stock = Number(document.getElementById("stock").value);
+      if (q < stock) {
+        q++;
+        document.getElementById("qurantity").value = q;
+        document.getElementById("totalprice").value = (p * q).toFixed(2);
+      }
+    });
+
+    document.getElementById("btnminus").addEventListener("click", function () {
+      let p = Number(document.getElementById("price").value);
+      let q = Number(document.getElementById("qurantity").value);
+      if (q > 0) {
+        q--;
+        document.getElementById("qurantity").value = q;
+        document.getElementById("totalprice").value = (p * q).toFixed(2);
+      }
+    });
+  </script>
+</body>
+
+</html>
