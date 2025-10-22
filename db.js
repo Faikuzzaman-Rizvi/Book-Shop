@@ -4,11 +4,11 @@ exports.mongodb = async ()=>
 {
    try
    {
-      await mongoose.connect("mongodb://localhost:27017/mydatabase'", {
+      await mongoose.connect("mongodb://localhost:27017/boimelaDB", {
    useNewUrlParser: true,
    useUnifiedTopology: true
 });
-      console.log('mongoes connect ');
+      console.log('mongoes connect');
    }
    catch(err)
    {
